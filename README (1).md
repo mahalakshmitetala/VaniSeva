@@ -4,19 +4,19 @@
 
 Helping citizens identify the correct government department for their complaint — in their own language, through voice or text.
 
-**Live App:** [VaniSeva on Streamlit](https://locallanguagecomplaintclassifier-zhhueftxujvsrbqee6esbf.streamlit.app/)
+**Live App:** [vaniseva.streamlit.app](https://vaniseva.streamlit.app)
 
 ---
 
 ## The Problem
 
-Citizens in rural and multilingual regions often do not know which government department handles their complaint. This leads to misdirected visits, wasted time, and unresolved issues — especially for those unfamiliar with government structure or who cannot read English.
+Citizens in rural and multilingual regions often do not know which government department handles their complaint. This leads to misdirected visits, wasted time, and unresolved issues — especially for those unfamiliar with government structure or who cannot communicate in English.
 
 ---
 
 ## What VaniSeva Does
 
-A citizen enters their complaint in any supported Indian language — by typing in native script, typing in Romanized form, or speaking via voice input. VaniSeva translates it, classifies it using a trained ML model, and tells them exactly which government department handles it. It also generates a formatted complaint letter in English that they can download and submit.
+A citizen enters their complaint in any supported Indian language — by typing in native script, Romanized form, or speaking via voice input. VaniSeva translates it, classifies it using a trained ML model, and tells them exactly which government department handles it. It also generates a formatted complaint letter in English that they can download and submit.
 
 ---
 
@@ -28,9 +28,10 @@ A citizen enters their complaint in any supported Indian language — by typing 
 - Auto-translation to English before classification
 - ML-based department prediction with confidence score
 - Voice output — result is read aloud in the user's language after classification
-- User authentication — register and login with secure password hashing
-- Complaint history — every classification is saved per user
-- PDF complaint letter — auto-generated, formatted, and downloadable in English
+- User authentication — register and login with secure SHA-256 password hashing
+- Complaint history — every classification is saved per user to MongoDB Atlas
+- PDF complaint letter — auto-generated formatted letter downloadable in English
+- Cloud database — persistent storage via MongoDB Atlas across all sessions
 
 ---
 
@@ -44,7 +45,8 @@ A citizen enters their complaint in any supported Indian language — by typing 
 | Voice Input | Web Speech API |
 | Voice Output | gTTS (Google Text-to-Speech) |
 | PDF Generation | fpdf2 |
-| Authentication | Custom — hashlib SHA-256, JSON storage |
+| Authentication | Custom — SHA-256 hashing, MongoDB storage |
+| Database | MongoDB Atlas (cloud, persistent) |
 | Language | Python 3 |
 
 ---
@@ -55,6 +57,7 @@ A citizen enters their complaint in any supported Indian language — by typing 
 VaniSeva/
 ├── app.py                      # Main application
 ├── auth.py                     # Login and registration logic
+├── db.py                       # MongoDB connection
 ├── pdf_generator.py            # Complaint letter PDF generator
 ├── requirements.txt
 ├── DejaVuSans.ttf              # Unicode font for PDF rendering
@@ -73,6 +76,15 @@ VaniSeva/
 git clone https://github.com/mahalakshmitetala/VaniSeva.git
 cd VaniSeva
 pip install -r requirements.txt
+```
+
+Create `.streamlit/secrets.toml` with:
+```
+MONGO_URI = "your-mongodb-connection-string"
+```
+
+Then run:
+```bash
 streamlit run app.py
 ```
 

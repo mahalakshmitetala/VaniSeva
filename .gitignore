@@ -3,3 +3,4 @@ complaints.csv
 __pycache__/
 .venv/
 *.pyc
+secrets.toml

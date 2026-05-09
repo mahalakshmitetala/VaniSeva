@@ -6,3 +6,4 @@ gtts
 fpdf2
 pyyaml
 scikit-learn
+pymongo

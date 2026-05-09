@@ -1,8 +1,6 @@
 import streamlit as st
 import joblib
 import numpy as np
-import csv
-import os
 from datetime import datetime
 from deep_translator import GoogleTranslator
 import streamlit.components.v1 as components
@@ -12,13 +10,17 @@ import tempfile
 
 from auth import show_auth_page, is_logged_in, logout
 from pdf_generator import generate_pdf
+from db import get_db
 
+# ------------------------------------------------------------------ #
+#  PAGE CONFIG
+# ------------------------------------------------------------------ #
 
-#PAGE CONFIG
 st.set_page_config(page_title="VaniSeva", layout="centered")
 
 st.markdown("""
 <style>
+    [data-testid="stStatusWidget"] { display: none !important; }
     section[data-testid="stSidebar"] { display: none; }
 
     .field-label {
@@ -29,17 +31,15 @@ st.markdown("""
         margin-bottom: 4px;
         color: #9aa6b2;
     }
-
     .stTextArea textarea {
         background-color: #ffffff !important;
         color: #111827 !important;
-        border: 1px solid #374151 !important;
+        border: 1px solid #d1d5db !important;
         border-radius: 8px !important;
     }
     .stTextArea textarea::placeholder {
         color: #9ca3af !important;
     }
-
     .stSelectbox > div > div {
         background-color: #ffffff !important;
         color: #111827 !important;
@@ -49,7 +49,6 @@ st.markdown("""
     .stSelectbox svg {
         fill: #111827 !important;
     }
-
     .stButton > button {
         background-color: #ffffff !important;
         color: #111827 !important;
@@ -63,7 +62,6 @@ st.markdown("""
         color: #2563eb !important;
         background-color: #ffffff !important;
     }
-
     .stDownloadButton > button {
         background-color: #ffffff !important;
         color: #111827 !important;
@@ -76,7 +74,6 @@ st.markdown("""
         border-color: #2563eb !important;
         color: #2563eb !important;
     }
-
     .result-card {
         border: 1px solid #1e293b;
         padding: 20px 24px;
@@ -109,14 +106,16 @@ st.markdown("""
         font-size: 12px;
         font-weight: 500;
     }
-
     hr { border-color: #1e293b; margin: 20px 0; }
     .stExpander { border: 1px solid #1e293b; border-radius: 8px; }
 </style>
 """, unsafe_allow_html=True)
 
 
-#AUTH GATE
+# ------------------------------------------------------------------ #
+#  AUTH GATE
+# ------------------------------------------------------------------ #
+
 if not is_logged_in():
     show_auth_page()
     st.stop()
@@ -124,7 +123,11 @@ if not is_logged_in():
 username = st.session_state["username"]
 fullname = st.session_state["fullname"]
 
-#MODEL
+
+# ------------------------------------------------------------------ #
+#  MODEL
+# ------------------------------------------------------------------ #
+
 @st.cache_resource
 def load_model():
     model      = joblib.load("models/complaint_model.pkl")
@@ -132,7 +135,10 @@ def load_model():
     return model, vectorizer
 
 
-#HELPERS
+# ------------------------------------------------------------------ #
+#  HELPERS
+# ------------------------------------------------------------------ #
+
 def translate(text):
     try:
         return GoogleTranslator(source="auto", target="en").translate(text)
@@ -156,38 +162,32 @@ def speak_result(text, lang_code):
     except Exception:
         pass
 
-#COMPLAINT HISTORY
-HISTORY_FILE = "complaints.csv"
-FIELDNAMES   = ["username", "complaint", "department", "confidence", "date"]
 
+# ------------------------------------------------------------------ #
+#  MONGODB COMPLAINT FUNCTIONS
+# ------------------------------------------------------------------ #
 
 def save_complaint(username, complaint_text, department, confidence):
-    exists = os.path.exists(HISTORY_FILE)
-    with open(HISTORY_FILE, "a", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=FIELDNAMES)
-        if not exists:
-            writer.writeheader()
-        writer.writerow({
-            "username":   username,
-            "complaint":  complaint_text,
-            "department": department,
-            "confidence": f"{confidence:.1f}%",
-            "date":       datetime.now().strftime("%d-%m-%Y %H:%M"),
-        })
+    col = get_db()["complaints"]
+    col.insert_one({
+        "username":   username,
+        "complaint":  complaint_text,
+        "department": department,
+        "confidence": f"{confidence:.1f}%",
+        "date":       datetime.now().strftime("%d-%m-%Y %H:%M"),
+    })
 
 
 def load_history(username):
-    if not os.path.exists(HISTORY_FILE):
-        return []
-    rows = []
-    with open(HISTORY_FILE, "r", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            if row.get("username") == username:
-                rows.append(row)
-    return rows[::-1]
+    col  = get_db()["complaints"]
+    rows = list(col.find({"username": username}, {"_id": 0}).sort("date", -1))
+    return rows
 
+
+# ------------------------------------------------------------------ #
 #  DEPARTMENT INFO
+# ------------------------------------------------------------------ #
+
 DEPT_INFO = {
     "PWD":                   "Public Works Department - Roads, Bridges, Government Buildings",
     "Municipality":          "Municipality - Drainage, Street Lights, Sanitation",
@@ -210,14 +210,21 @@ def get_dept_description(dept):
             return val
     return dept
 
-#SESSION INIT
+
+# ------------------------------------------------------------------ #
+#  SESSION INIT
+# ------------------------------------------------------------------ #
+
 if "complaint" not in st.session_state:
     st.session_state.complaint = ""
 if "result" not in st.session_state:
     st.session_state.result = None
 
 
-#HEADER
+# ------------------------------------------------------------------ #
+#  HEADER
+# ------------------------------------------------------------------ #
+
 col_title, col_logout = st.columns([5, 1])
 
 with col_title:
@@ -236,11 +243,17 @@ with col_logout:
 st.markdown("<hr>", unsafe_allow_html=True)
 
 
-#TABS
+# ------------------------------------------------------------------ #
+#  TABS
+# ------------------------------------------------------------------ #
+
 tab_classify, tab_history = st.tabs(["Classify Complaint", "My History"])
 
 
-#TAB 1 — CLASSIFY
+# ================================================================== #
+#  TAB 1 — CLASSIFY
+# ================================================================== #
+
 with tab_classify:
 
     st.markdown("<p class='field-label'>Language</p>", unsafe_allow_html=True)
@@ -270,7 +283,6 @@ with tab_classify:
     )
     st.session_state.complaint = complaint
 
-    # Voice input
     st.markdown("""
     <p class='field-label' style='margin-top:12px;'>Voice Input</p>
     <p style='color:#475569; font-size:12px; margin-bottom:8px;'>
@@ -376,7 +388,6 @@ with tab_classify:
             }
             save_complaint(username, translated, pred, conf)
 
-    # Result
     if st.session_state.result:
         r         = st.session_state.result
         dept_desc = get_dept_description(r["department"])
@@ -390,7 +401,6 @@ with tab_classify:
         </div>
         """, unsafe_allow_html=True)
 
-        # Voice output
         if r["tts_lang"] == "te":
             speak_text = f"Mee complaint {r['department']} department ki chendutundi."
         elif r["tts_lang"] == "hi":
@@ -400,7 +410,6 @@ with tab_classify:
 
         speak_result(speak_text, r["tts_lang"])
 
-        # PDF download
         pdf_bytes = generate_pdf(
             fullname=fullname,
             complaint_text=r["translated"],
@@ -416,8 +425,10 @@ with tab_classify:
         )
 
 
+# ================================================================== #
+#  TAB 2 — HISTORY
+# ================================================================== #
 
-#TAB 2 — HISTORY
 with tab_history:
     st.markdown(
         "<p style='color:#64748b; font-size:13px; margin-bottom:16px;'>"
@@ -431,7 +442,7 @@ with tab_history:
     if not history:
         st.info("You have not classified any complaints yet.")
     else:
-        for i, row in enumerate(history):
+        for row in history:
             label = f"{row.get('date', '')}  —  {row.get('department', '')}"
             with st.expander(label):
                 st.markdown(f"**Complaint:** {row.get('complaint', '')}")
