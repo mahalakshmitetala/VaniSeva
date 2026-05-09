@@ -70,26 +70,6 @@ VaniSeva/
 
 ---
 
-## How to Run Locally
-
-```bash
-git clone https://github.com/mahalakshmitetala/VaniSeva.git
-cd VaniSeva
-pip install -r requirements.txt
-```
-
-Create `.streamlit/secrets.toml` with:
-```
-MONGO_URI = "your-mongodb-connection-string"
-```
-
-Then run:
-```bash
-streamlit run app.py
-```
-
----
-
 ## Use Case
 
 A villager in Andhra Pradesh notices a broken road but does not know whether to approach the municipality, NHAI, or Panchayat. They open VaniSeva, speak their complaint in Telugu, and instantly learn which department to approach — with a downloadable complaint letter ready to submit.
@@ -108,5 +88,3 @@ A villager in Andhra Pradesh notices a broken road but does not know whether to 
 ## Author
 
 **Tetala Mahalakshmi**
-B.Tech 3rd Year | Andhra Pradesh, India
-[GitHub](https://github.com/mahalakshmitetala)
