@@ -12,10 +12,7 @@ from auth import show_auth_page, is_logged_in, logout
 from pdf_generator import generate_pdf
 from db import get_db
 
-# ------------------------------------------------------------------ #
-#  PAGE CONFIG
-# ------------------------------------------------------------------ #
-
+#PAGE CONFIG
 st.set_page_config(page_title="VaniSeva", layout="centered")
 
 st.markdown("""
@@ -112,10 +109,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-# ------------------------------------------------------------------ #
-#  AUTH GATE
-# ------------------------------------------------------------------ #
-
+# AUTH GATE
 if not is_logged_in():
     show_auth_page()
     st.stop()
@@ -123,22 +117,14 @@ if not is_logged_in():
 username = st.session_state["username"]
 fullname = st.session_state["fullname"]
 
-
-# ------------------------------------------------------------------ #
-#  MODEL
-# ------------------------------------------------------------------ #
-
+#MODEL
 @st.cache_resource
 def load_model():
     model      = joblib.load("models/complaint_model.pkl")
     vectorizer = joblib.load("models/tfidf_vectorizer.pkl")
     return model, vectorizer
 
-
-# ------------------------------------------------------------------ #
-#  HELPERS
-# ------------------------------------------------------------------ #
-
+#HELPERS
 def translate(text):
     try:
         return GoogleTranslator(source="auto", target="en").translate(text)
@@ -163,10 +149,7 @@ def speak_result(text, lang_code):
         pass
 
 
-# ------------------------------------------------------------------ #
-#  MONGODB COMPLAINT FUNCTIONS
-# ------------------------------------------------------------------ #
-
+#MONGODB COMPLAINT FUNCTIONS
 def save_complaint(username, complaint_text, department, confidence):
     col = get_db()["complaints"]
     col.insert_one({
@@ -184,10 +167,7 @@ def load_history(username):
     return rows
 
 
-# ------------------------------------------------------------------ #
-#  DEPARTMENT INFO
-# ------------------------------------------------------------------ #
-
+#DEPARTMENT INFO
 DEPT_INFO = {
     "PWD":                   "Public Works Department - Roads, Bridges, Government Buildings",
     "Municipality":          "Municipality - Drainage, Street Lights, Sanitation",
@@ -209,22 +189,14 @@ def get_dept_description(dept):
         if key.lower() in dept.lower():
             return val
     return dept
-
-
-# ------------------------------------------------------------------ #
-#  SESSION INIT
-# ------------------------------------------------------------------ #
-
+    
+#SESSION INIT
 if "complaint" not in st.session_state:
     st.session_state.complaint = ""
 if "result" not in st.session_state:
     st.session_state.result = None
 
-
-# ------------------------------------------------------------------ #
-#  HEADER
-# ------------------------------------------------------------------ #
-
+#HEADER
 col_title, col_logout = st.columns([5, 1])
 
 with col_title:
@@ -242,18 +214,10 @@ with col_logout:
 
 st.markdown("<hr>", unsafe_allow_html=True)
 
-
-# ------------------------------------------------------------------ #
-#  TABS
-# ------------------------------------------------------------------ #
-
+#TABS
 tab_classify, tab_history = st.tabs(["Classify Complaint", "My History"])
 
-
-# ================================================================== #
-#  TAB 1 — CLASSIFY
-# ================================================================== #
-
+#TAB 1 — CLASSIFY
 with tab_classify:
 
     st.markdown("<p class='field-label'>Language</p>", unsafe_allow_html=True)
@@ -425,9 +389,7 @@ with tab_classify:
         )
 
 
-# ================================================================== #
-#  TAB 2 — HISTORY
-# ================================================================== #
+#TAB 2 — HISTORY
 
 with tab_history:
     st.markdown(
