@@ -9,6 +9,7 @@ Helping citizens identify the correct government department for their complaint 
 ---
 ## The Problem
 Citizens in rural and multilingual regions often do not know which government department handles their complaint. This leads to misdirected visits, wasted time, and unresolved issues — especially for those unfamiliar with government structure or who cannot communicate in English.
+
 ---
 ## What VaniSeva Does
 A citizen enters their complaint in any supported Indian language — by typing in native script, Romanized form, or speaking via voice input. VaniSeva translates it, classifies it using a trained ML model, and tells them exactly which government department handles it. It also generates a formatted complaint letter in English that they can download and submit.
