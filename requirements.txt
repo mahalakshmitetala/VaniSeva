@@ -1,0 +1,8 @@
+streamlit
+joblib
+numpy
+deep-translator
+gtts
+fpdf2
+pyyaml
+scikit-learn
